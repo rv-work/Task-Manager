@@ -16,7 +16,6 @@ const UserDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [pieChartData, setPieChartData] = useState([]);
   const [barChartData, setBarChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // Prepare chart data
   const prepareChartData = (data) => {
@@ -39,7 +38,6 @@ const UserDashboard = () => {
   // Fetch dashboard data
   const getDashboardData = async () => {
     try {
-      setLoading(true);
       const response = await axiosInstance.get("/tasks/user-dashboard-data");
 
       if (response.data) {
@@ -48,8 +46,6 @@ const UserDashboard = () => {
       }
     } catch (error) {
       console.log("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -74,10 +70,15 @@ const UserDashboard = () => {
         </div>
 
         {/* LOADING */}
-        {loading ? (
-          <DashboardEmptyState loading isAdmin={false} />
+        {dashboardData === null ? (
+          // 🔥 PURE LOADING (NO EMPTY STATE)
+          <div className="flex justify-center items-center h-40">
+            <p className="text-gray-500 text-sm animate-pulse">
+              Loading dashboard...
+            </p>
+          </div>
         ) : totalTasks === 0 ? (
-          /* EMPTY STATE */
+          // EMPTY STATE (AFTER API)
           <DashboardEmptyState isAdmin={false} />
         ) : (
           <>
