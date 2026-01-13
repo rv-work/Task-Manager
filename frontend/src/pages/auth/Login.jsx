@@ -12,6 +12,27 @@ import {
   signInSuccess,
 } from "../../redux/slice/userSlice";
 
+const DEMO_USERS = [
+  {
+    role: "Admin",
+    email: "prajakta@gmail.com",
+    password: "Prajakta",
+    color: "bg-purple-100 text-purple-700",
+  },
+  {
+    role: "Employee 1",
+    email: "rv@gmail.com",
+    password: "RV@123",
+    color: "bg-blue-100 text-blue-700",
+  },
+  {
+    role: "Employee 2",
+    email: "rv2@gmail.com",
+    password: "RV@123",
+    color: "bg-green-100 text-green-700",
+  },
+];
+
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -22,6 +43,12 @@ const Login = () => {
   const [error, setError] = useState(null);
 
   const { loading } = useSelector((state) => state.user);
+
+  const handleDemoFill = (email, password) => {
+    setEmail(email);
+    setPassword(password);
+    setError(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,9 +63,8 @@ const Login = () => {
       return;
     }
 
-    setError(null);
-
     try {
+      setError(null);
       dispatch(signInStart());
 
       const response = await axiosInstance.post(
@@ -56,7 +82,6 @@ const Login = () => {
       const message =
         error.response?.data?.message ||
         "Something went wrong. Please try again!";
-
       setError(message);
       dispatch(signInFailure(message));
     }
@@ -64,9 +89,32 @@ const Login = () => {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-6">
+        {/* 🔹 Demo Credentials */}
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 text-center">
+            Demo Login (One Click)
+          </h3>
+
+          <div className="grid grid-cols-1 gap-2">
+            {DEMO_USERS.map((user) => (
+              <button
+                key={user.email}
+                type="button"
+                disabled={loading}
+                onClick={() => handleDemoFill(user.email, user.password)}
+                className={`flex justify-between items-center px-4 py-2 rounded-lg text-sm font-medium transition hover:scale-[1.01] ${user.color}`}
+              >
+                <span>{user.role}</span>
+                <span className="text-xs opacity-70">Click to autofill</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 🔹 Login Card */}
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+          <div className="h-2 bg-gradient-to-r from-blue-600 to-blue-400" />
 
           <div className="p-8">
             {/* Logo */}
@@ -87,7 +135,6 @@ const Login = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
@@ -95,14 +142,12 @@ const Login = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                  placeholder="your@email.com"
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -111,10 +156,9 @@ const Login = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 pr-12"
-                    placeholder="•••••••"
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 pr-12 focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button"
@@ -129,49 +173,19 @@ const Login = () => {
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
 
-              {/* Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full flex items-center justify-center py-3 px-4 rounded-md text-sm font-medium text-white transition
-                  ${
-                    loading
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }
-                `}
+                className={`w-full py-3 rounded-md text-white font-medium transition ${
+                  loading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
               >
-                {loading ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 mr-2 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      />
-                    </svg>
-                    Logging in...
-                  </>
-                ) : (
-                  "LOGIN"
-                )}
+                {loading ? "Logging in..." : "LOGIN"}
               </button>
             </form>
 
-            {/* Footer */}
             <div className="mt-6 text-center text-sm">
               <p className="text-gray-600">
                 Don’t have an account?{" "}

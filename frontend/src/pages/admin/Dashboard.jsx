@@ -13,65 +13,65 @@ const COLORS = ["#FF6384", "#36A2EB", "#FFCE56"];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
   const { currentUser } = useSelector((state) => state.user);
 
-  const [dashboardData, setDashboardData] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
   const [pieChartData, setPieChartData] = useState([]);
   const [barChartData, setBarChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // prepare data for pie chart
+  // Prepare chart data
   const prepareChartData = (data) => {
     const taskDistribution = data?.taskDistribution || {};
     const taskPriorityLevels = data?.taskPriorityLevel || {};
 
-    const taskDistributionData = [
+    setPieChartData([
       { status: "Pending", count: taskDistribution?.Pending || 0 },
       { status: "In Progress", count: taskDistribution?.InProgress || 0 },
       { status: "Completed", count: taskDistribution?.Completed || 0 },
-    ];
+    ]);
 
-    setPieChartData(taskDistributionData);
-
-    const priorityLevelData = [
+    setBarChartData([
       { priority: "Low", count: taskPriorityLevels?.Low || 0 },
       { priority: "Medium", count: taskPriorityLevels?.Medium || 0 },
       { priority: "High", count: taskPriorityLevels?.High || 0 },
-    ];
-
-    setBarChartData(priorityLevelData);
+    ]);
   };
 
+  // Fetch dashboard data
   const getDashboardData = async () => {
     try {
+      setLoading(true);
       const response = await axiosInstance.get("/tasks/dashboard-data");
 
       if (response.data) {
         setDashboardData(response.data);
-        prepareChartData(response.data?.charts || null);
+        prepareChartData(response.data?.charts);
       }
     } catch (error) {
-      console.log("Error fetching dashboard data: ", error);
+      console.log("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     getDashboardData();
-
-    return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const totalTasks = dashboardData?.charts?.taskDistribution?.All || 0;
+
   return (
-    <DashboardLayout activeMenu={"Dashboard"}>
+    <DashboardLayout activeMenu="Dashboard">
       <div className="p-6 space-y-6">
+        {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 shadow-lg text-white">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold">
                 Welcome! {currentUser?.name}
               </h2>
-
               <p className="text-blue-100 mt-1">
                 {moment().format("dddd Do MMMM YYYY")}
               </p>
@@ -88,50 +88,38 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {dashboardData?.charts?.taskDistribution?.All === 0 ? (
+        {/* RENDER LOGIC */}
+        {loading ? (
+          <DashboardEmptyState loading isAdmin />
+        ) : totalTasks === 0 ? (
           <DashboardEmptyState
-            isAdmin={true}
+            isAdmin
             onCreate={() => navigate("/admin/create-task")}
           />
         ) : (
           <>
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
-                <h3 className="text-gray-500 text-sm font-medium">
-                  Total Tasks
-                </h3>
-                <p className="text-3xl font-bold mt-2">
-                  {dashboardData?.charts?.taskDistribution?.All || 0}
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500">
-                <h3 className="text-gray-500 text-sm font-medium">
-                  Pending Tasks
-                </h3>
-                <p className="text-3xl font-bold mt-2">
-                  {dashboardData?.charts?.taskDistribution?.Pending || 0}
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-                <h3 className="text-gray-500 text-sm font-medium">
-                  In Progress Tasks
-                </h3>
-                <p className="text-3xl font-bold mt-2">
-                  {dashboardData?.charts?.taskDistribution?.InProgress || 0}
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
-                <h3 className="text-gray-500 text-sm font-medium">
-                  Completed Tasks
-                </h3>
-                <p className="text-3xl font-bold mt-2">
-                  {dashboardData?.charts?.taskDistribution?.Completed || 0}
-                </p>
-              </div>
+              <StatCard
+                title="Total Tasks"
+                value={totalTasks}
+                color="border-blue-500"
+              />
+              <StatCard
+                title="Pending Tasks"
+                value={dashboardData?.charts?.taskDistribution?.Pending || 0}
+                color="border-yellow-500"
+              />
+              <StatCard
+                title="In Progress Tasks"
+                value={dashboardData?.charts?.taskDistribution?.InProgress || 0}
+                color="border-green-500"
+              />
+              <StatCard
+                title="Completed Tasks"
+                value={dashboardData?.charts?.taskDistribution?.Completed || 0}
+                color="border-red-500"
+              />
             </div>
 
             {/* Charts */}
@@ -156,7 +144,7 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Tasks */}
-            <RecentTasks tasks={dashboardData?.recentTasks} admin={true} />
+            <RecentTasks tasks={dashboardData?.recentTasks} admin />
           </>
         )}
       </div>
@@ -165,3 +153,10 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+const StatCard = ({ title, value, color }) => (
+  <div className={`bg-white p-6 rounded-xl shadow-md border-l-4 ${color}`}>
+    <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+    <p className="text-3xl font-bold mt-2">{value}</p>
+  </div>
+);
