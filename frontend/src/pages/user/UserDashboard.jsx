@@ -71,7 +71,6 @@ const UserDashboard = () => {
 
         {/* LOADING */}
         {dashboardData === null ? (
-          // 🔥 PURE LOADING (NO EMPTY STATE)
           <div className="flex justify-center items-center h-40">
             <p className="text-gray-500 text-sm animate-pulse">
               Loading dashboard...
